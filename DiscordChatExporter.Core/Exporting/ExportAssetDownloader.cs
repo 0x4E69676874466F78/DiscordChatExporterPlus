@@ -45,8 +45,11 @@ internal partial class ExportAssetDownloader(string workingDirPath, bool reuse)
             async innerCancellationToken =>
             {
                 // Download the file
-                var proxy = new WebProxy { Address = new Uri(Environment.GetEnvironmentVariable("proxy")) };
-                var httpClientHandler = new HttpClientHandler { Proxy = proxy };
+                var proxyAddress = Environment.GetEnvironmentVariable("proxy");
+                var httpClientHandler = new HttpClientHandler();
+                if (!string.IsNullOrEmpty(proxyAddress)) {
+                    httpClientHandler.Proxy = new WebProxy(new Uri(proxyAddress));
+                }
                 var httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true);
                 using var response = await httpClient.GetAsync(url, innerCancellationToken);
                 await using var output = File.Create(filePath);
