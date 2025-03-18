@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using System.Net;
+using System.Net.Http;
 using AsyncKeyedLock;
 using DiscordChatExporter.Core.Utils;
 using DiscordChatExporter.Core.Utils.Extensions;
@@ -43,7 +45,13 @@ internal partial class ExportAssetDownloader(string workingDirPath, bool reuse)
             async innerCancellationToken =>
             {
                 // Download the file
-                using var response = await Http.Client.GetAsync(url, innerCancellationToken);
+                var proxyAddress = Environment.GetEnvironmentVariable("proxy");
+                var httpClientHandler = new HttpClientHandler();
+                if (!string.IsNullOrEmpty(proxyAddress)) {
+                    httpClientHandler.Proxy = new WebProxy(new Uri(proxyAddress));
+                }
+                var httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true);
+                using var response = await httpClient.GetAsync(url, innerCancellationToken);
                 await using var output = File.Create(filePath);
                 await response.Content.CopyToAsync(output, innerCancellationToken);
             },

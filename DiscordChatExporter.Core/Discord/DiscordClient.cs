@@ -41,7 +41,14 @@ public class DiscordClient(string token)
                     tokenKind == TokenKind.Bot ? $"Bot {token}" : token
                 );
 
-                var response = await Http.Client.SendAsync(
+
+                var proxyAddress = Environment.GetEnvironmentVariable("proxy");
+                var httpClientHandler = new HttpClientHandler();
+                if (!string.IsNullOrEmpty(proxyAddress)) {
+                    httpClientHandler.Proxy = new WebProxy(new Uri(proxyAddress));
+                }
+                var httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true);
+                var response = await httpClient.SendAsync(
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     innerCancellationToken
